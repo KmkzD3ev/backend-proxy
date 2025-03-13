@@ -40,3 +40,23 @@ app.post("/proxy/qrcode", async (req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`✅ Proxy rodando na porta ${PORT}`));
 
+
+//WEBHOOK NOTIFICAÇAO DE PAGAMENTO 
+
+app.post("/webhook/pagamento", async (req, res) => {
+    try {
+      const pagamento = req.body; // Dados recebidos da Zendry
+      console.log("🔔 Notificação de pagamento recebida:", pagamento);
+  
+      if (pagamento.qrcode?.status === "paid") {
+        console.log(`✅ Pagamento confirmado para ${pagamento.qrcode.reference_code}`);
+        // 🔹 Aqui você pode atualizar banco de dados, liberar saldo, notificar o cliente, etc.
+      }
+  
+      res.sendStatus(200); // Confirma que recebemos a notificação
+    } catch (error) {
+      console.error("❌ Erro ao processar Webhook:", error);
+      res.sendStatus(500);
+    }
+  });
+  
