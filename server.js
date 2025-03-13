@@ -7,10 +7,19 @@ app.use(cors()); // Permite requisições do frontend
 app.use(express.json()); // Permite enviar JSON no corpo das requisições
 
 
-// 🔒 Proteção para permitir apenas requisições do seu site
+/* 🔒 Proteção para permitir apenas requisições do seu site
 app.use((req, res, next) => {
     const allowedOrigins = ["https://bingodasorte.tech"];
     if (!allowedOrigins.includes(req.headers.origin)) {
+        return res.status(403).json({ error: "Acesso não autorizado" });
+    }
+    next();
+});*/
+app.use((req, res, next) => {
+    const allowedOrigins = ["https://bingodasorte.tech"];
+    const isDevelopment = process.env.NODE_ENV !== "production"; // Verifica se está em ambiente de teste
+
+    if (!isDevelopment && !allowedOrigins.includes(req.headers.origin)) {
         return res.status(403).json({ error: "Acesso não autorizado" });
     }
     next();
