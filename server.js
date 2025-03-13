@@ -15,15 +15,7 @@ app.use((req, res, next) => {
     }
     next();
 });*/
-app.use((req, res, next) => {
-    const allowedOrigins = ["https://bingodasorte.tech"];
-    const isDevelopment = process.env.NODE_ENV !== "production"; // Verifica se está em ambiente de teste
 
-    if (!isDevelopment && !allowedOrigins.includes(req.headers.origin)) {
-        return res.status(403).json({ error: "Acesso não autorizado" });
-    }
-    next();
-});
 
 // 🔹 Proxy para a API da Zendry
 app.post("/proxy/qrcode", async (req, res) => {
