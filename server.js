@@ -49,7 +49,7 @@ app.post("/webhook/pagamento", async (req, res) => {
       console.log("🔔 Notificação de pagamento recebida:", pagamento);
   
       if (pagamento.qrcode?.status === "paid") {
-        console.log(`✅ Pagamento confirmado para ${pagamento.qrcode.reference_code}`);
+        console.log(`✅ Pagamento confirmado para esse  ${pagamento.qrcode.reference_code}`);
         // 🔹 Aqui você pode atualizar banco de dados, liberar saldo, notificar o cliente, etc.
       }
   
