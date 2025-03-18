@@ -107,6 +107,44 @@ app.get("/webhook/pagamento/:reference_code", async (req, res) => {
     }
 });
 
+////////////////////////////////////////////
+// 🔥 Endpoint para criar um pagamento Pix na API da Zendry
+app.post("/proxy/pagamento", async (req, res) => {
+    try {
+        const token = req.headers.authorization; // Token recebido no frontend
+        const { receiver_name, receiver_document, pix_key, value_cents } = req.body; // Dados do pagador
+
+        // 🔹 Definição do corpo da requisição (DICT - com chave Pix)
+        const payload = {
+            initiation_type: "dict", // Indica que o pagamento será feito via chave Pix
+            idempotent_id: `PAGAMENTO_${Date.now()}`, // Identificador único para evitar duplicações
+            receiver_name: receiver_name,
+            receiver_document: receiver_document,
+            value_cents: value_cents, // Valor do pagamento em centavos
+            pix_key_type: "cpf", // Tipo de chave Pix (cpf, cnpj, email, phone, token)
+            pix_key: pix_key, // Chave Pix do destinatário
+            authorized: false // Se `true`, autoriza automaticamente
+        };
+
+        console.log("📌 Enviando pagamento para API da Zendry:", payload);
+
+        // 🔥 Faz a requisição para a API da Zendry
+        const response = await axios.post("https://api.zendry.com.br/v1/pix/payments", payload, {
+            headers: {
+                "Authorization": token,
+                "Content-Type": "application/json",
+            },
+        });
+
+        console.log("✅ Pagamento cadastrado com sucesso:", response.data);
+        res.json(response.data); // Retorna a resposta para o frontend
+
+    } catch (error) {
+        console.error("❌ Erro ao cadastrar pagamento:", error.response?.data || error);
+        res.status(error.response?.status || 500).json(error.response?.data || { error: "Erro ao cadastrar pagamento" });
+    }
+});
+
 
 // 🔹 Configuração do Servidor
 const PORT = process.env.PORT || 3001;
