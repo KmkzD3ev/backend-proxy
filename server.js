@@ -40,26 +40,40 @@ app.post("/proxy/qrcode", async (req, res) => {
 let pagamentosRecebidos = {};
 
 // 🔥 Webhook para receber notificações de pagamento da Zendry
+// 🔥 Webhook para receber notificações de pagamento da Zendry
 app.post("/webhook/pagamento", async (req, res) => {
     try {
         console.log("🔔 Notificação de pagamento recebida:", req.body);
 
-        const { qrcode } = req.body;
-        if (!qrcode || !qrcode.status || !qrcode.reference_code) {
+        const { notification_type, message } = req.body;
+
+        // 🔍 Verifica se a notificação é do tipo correto e se a estrutura do payload é válida
+        if (notification_type !== "pix_qrcode" || !message || !message.reference_code || !message.status) {
             console.warn("⚠️ Notificação recebida sem dados válidos:", req.body);
             return res.status(400).json({ error: "Dados inválidos no webhook" });
         }
 
-        if (qrcode.status === "paid") {
-            console.log(`✅ Pagamento confirmado para ${qrcode.reference_code}`);
+        // 🔥 Verifica se o pagamento foi realizado
+        if (message.status === "paid") {
+            console.log(`✅ Pagamento confirmado para ${message.reference_code}`);
 
             // 🔥 Armazena o pagamento na memória do backend
-            pagamentosRecebidos[qrcode.reference_code] = {
-                reference_code: qrcode.reference_code,
+            pagamentosRecebidos[message.reference_code] = {
+                reference_code: message.reference_code,
+                external_reference: message.external_reference,
                 status: "paid",
-                valor: qrcode.value,
+                valor: message.value_cents,
+                generator_name: message.generator_name,
+                generator_document: message.generator_document,
+                payer_name: message.payer_name,
+                payer_document: message.payer_document,
+                registration_date: message.registration_date,
+                payment_date: message.payment_date,
+                end_to_end: message.end_to_end,
                 timestamp: new Date().toISOString(),
             };
+
+            console.log("📝 Dados do pagamento armazenados:", pagamentosRecebidos[message.reference_code]);
         }
 
         res.status(200).json({ message: "Operation succeeded" }); // Confirma que recebemos a notificação
@@ -69,6 +83,49 @@ app.post("/webhook/pagamento", async (req, res) => {
         res.status(500).json({ error: "Erro ao processar webhook" });
     }
 });
+
+// 🔥 Verificação periódica de pagamentos
+setInterval(async () => {
+    console.log("🔄 Verificando pagamentos pendentes...");
+
+    for (const reference_code in pagamentosRecebidos) {
+        if (pagamentosRecebidos[reference_code].status !== "paid") {
+            try {
+                console.log(`🔍 Consultando status do pagamento: ${reference_code}`);
+
+                const token = await getTokenFromExternalAPI();
+                if (!token) {
+                    console.warn("⚠️ Não foi possível obter o token de autenticação");
+                    continue;
+                }
+
+                const response = await axios.get(`https://api.zendry.com.br/v1/pix/qrcodes/${reference_code}`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const paymentData = response.data;
+
+                if (paymentData.status === "paid") {
+                    console.log(`✅ Pagamento confirmado automaticamente para ${reference_code}`);
+
+                    // Atualiza o status do pagamento na memória
+                    pagamentosRecebidos[reference_code] = {
+                        ...pagamentosRecebidos[reference_code],
+                        status: "paid",
+                        payment_date: paymentData.payment_date,
+                    };
+                }
+            } catch (error) {
+                console.error(`❌ Erro ao consultar status de ${reference_code}:`, error);
+            }
+        }
+    }
+}, 60000); // 🔄 Executa a cada 1 minuto (60000ms)
+
+
 
 // 🔥 Obtém o token de autenticação da API da Zendry
 const getTokenFromExternalAPI = async () => {
