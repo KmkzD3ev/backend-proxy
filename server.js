@@ -76,11 +76,12 @@ const getTokenFromExternalAPI = async () => {
 };
 
 // 🔥 Endpoint para consultar pagamento manualmente
+// 🔥 Endpoint para consultar pagamento manualmente
 app.get("/webhook/pagamento/:reference_code", async (req, res) => {
     try {
         const referenceCode = req.params.reference_code;
 
-        // 🔍 Primeiro, verifica se o pagamento já foi recebido pelo Webhook
+        // 🔍 Verifica primeiro na memória
         if (pagamentosRecebidos[referenceCode]) {
             console.log(`🔍 Pagamento encontrado na memória: ${referenceCode}`);
             return res.json(pagamentosRecebidos[referenceCode]);
@@ -89,20 +90,52 @@ app.get("/webhook/pagamento/:reference_code", async (req, res) => {
         // 🔥 Obtém o token antes da consulta
         const token = await getTokenFromExternalAPI();
         if (!token) {
+            console.error("❌ Erro: Falha ao obter token de autenticação.");
             return res.status(500).json({ error: "Erro ao obter token de autenticação" });
         }
 
-        // 🔥 Faz a requisição para a API da Zendry para verificar o status do pagamento
-        const response = await axios.get(`https://api.zendry.com.br/v1/pix/qrcodes/${referenceCode}`, {
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        });
+        console.log(`🔍 Consultando pagamento na Zendry para referenceCode: ${referenceCode}`);
 
-        res.json(response.data); // 🔥 Retorna o status do pagamento para o frontend
+        // 🔥 Faz a requisição para a API da Zendry
+        const response = await axios.get(
+            `https://api.zendry.com.br/v1/pix/qrcodes/${referenceCode}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                timeout: 10000, // 🔹 Define um timeout de 10s para evitar travamentos
+            }
+        );
+
+        console.log("✅ Resposta da Zendry:", response.data);
+
+        // 🔹 Se o pagamento foi realizado, salva na memória
+        if (response.data.status === "paid") {
+            pagamentosRecebidos[referenceCode] = {
+                reference_code: referenceCode,
+                status: "paid",
+                valor: response.data.value,
+                timestamp: new Date().toISOString(),
+            };
+        }
+
+        res.json(response.data); // 🔥 Retorna a resposta para o frontend
+
     } catch (error) {
-        console.error("❌ Erro ao consultar pagamento:", error);
+        console.error("❌ Erro ao consultar pagamento:", error.response?.status, error.response?.data);
+
+        if (error.code === 'ECONNABORTED') {
+            console.warn("⚠️ Tempo de resposta da API da Zendry excedeu o limite.");
+            return res.status(408).json({ error: "Aguardando pagamento..." });
+        }
+
+        // Se for erro 504, retorna status de "Aguardando pagamento" ao invés de erro
+        if (error.response?.status === 504) {
+            console.warn("⚠️ API da Zendry demorou para responder. Mantendo status de 'Aguardando pagamento...'");
+            return res.status(200).json({ status: "pending", message: "Aguardando pagamento..." });
+        }
+
         res.status(error.response?.status || 500).json(error.response?.data || { error: "Erro ao consultar pagamento" });
     }
 });
