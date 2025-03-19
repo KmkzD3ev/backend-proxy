@@ -39,28 +39,34 @@ app.post("/proxy/qrcode", async (req, res) => {
 
 let pagamentosRecebidos = {};
 
-// 🔥 Webhook para receber notificações de pagamento
+// 🔥 Webhook para receber notificações de pagamento da Zendry
 app.post("/webhook/pagamento", async (req, res) => {
     try {
-        const pagamento = req.body;
-        console.log("🔔 Notificação de pagamento recebida:", pagamento);
+        console.log("🔔 Notificação de pagamento recebida:", req.body);
 
-        if (pagamento.qrcode?.status === "paid") {
-            console.log(`✅ Pagamento confirmado para ${pagamento.qrcode.reference_code}`);
+        const { qrcode } = req.body;
+        if (!qrcode || !qrcode.status || !qrcode.reference_code) {
+            console.warn("⚠️ Notificação recebida sem dados válidos:", req.body);
+            return res.status(400).json({ error: "Dados inválidos no webhook" });
+        }
+
+        if (qrcode.status === "paid") {
+            console.log(`✅ Pagamento confirmado para ${qrcode.reference_code}`);
 
             // 🔥 Armazena o pagamento na memória do backend
-            pagamentosRecebidos[pagamento.qrcode.reference_code] = {
-                reference_code: pagamento.qrcode.reference_code,
+            pagamentosRecebidos[qrcode.reference_code] = {
+                reference_code: qrcode.reference_code,
                 status: "paid",
-                valor: pagamento.qrcode.value,
+                valor: qrcode.value,
                 timestamp: new Date().toISOString(),
             };
         }
 
-        res.sendStatus(200); // Confirma que recebemos a notificação
+        res.status(200).json({ message: "Operation succeeded" }); // Confirma que recebemos a notificação
+
     } catch (error) {
         console.error("❌ Erro ao processar Webhook:", error);
-        res.sendStatus(500);
+        res.status(500).json({ error: "Erro ao processar webhook" });
     }
 });
 
