@@ -65,7 +65,7 @@ app.post("/webhook/pix", (req, res) => {
 app.post("/cadastrar-webhook", async (req, res) => {
     try {
         const { url, authorization } = req.body;
-        const webhookType = "1"; // Defina conforme necessário
+        const webhookType = 1; // Defina conforme necessário
 
         const response = await axios.post(`https://api.zendry.com.br/v1/webhooks/${webhookType}`, {
             url,
