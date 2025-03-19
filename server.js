@@ -39,51 +39,57 @@ app.post("/proxy/qrcode", async (req, res) => {
 
 let pagamentosRecebidos = {};
 
-// 🔥 Webhook para receber notificações de pagamento da Zendry
-// 🔥 Webhook para receber notificações de pagamento da Zendry
-app.post("/webhook/pagamento", async (req, res) => {
+
+// 🔹 Endpoint dinâmico para qualquer webhook type
+app.post("/webhook/:webhook_type_id", async (req, res) => {
     try {
-        console.log("🔔 Notificação de pagamento recebida:", req.body);
+        const { webhook_type_id } = req.params;
+        console.log(`🔔 Webhook recebido para: ${webhook_type_id}`, req.body);
 
         const { notification_type, message } = req.body;
 
-        // 🔍 Verifica se a notificação é do tipo correto e se a estrutura do payload é válida
-        if (notification_type !== "pix_qrcode" || !message || !message.reference_code || !message.status) {
+        // 🔍 Verifica se o webhook recebido tem dados válidos
+        if (!notification_type || !message || !message.reference_code || !message.status) {
             console.warn("⚠️ Notificação recebida sem dados válidos:", req.body);
             return res.status(400).json({ error: "Dados inválidos no webhook" });
         }
 
-        // 🔥 Verifica se o pagamento foi realizado
-        if (message.status === "paid") {
-            console.log(`✅ Pagamento confirmado para ${message.reference_code}`);
+        // 🔹 Verifica o tipo de webhook recebido
+        if (webhook_type_id === "pagamento" && notification_type === "pix_qrcode") {
+            // 🔥 Verifica se o pagamento foi realizado
+            if (message.status === "paid") {
+                console.log(`✅ Pagamento confirmado para ${message.reference_code}`);
 
-            // 🔥 Armazena o pagamento na memória do backend
-            pagamentosRecebidos[message.reference_code] = {
-                reference_code: message.reference_code,
-                external_reference: message.external_reference,
-                status: "paid",
-                valor: message.value_cents,
-                generator_name: message.generator_name,
-                generator_document: message.generator_document,
-                payer_name: message.payer_name,
-                payer_document: message.payer_document,
-                registration_date: message.registration_date,
-                payment_date: message.payment_date,
-                end_to_end: message.end_to_end,
-                timestamp: new Date().toISOString(),
-            };
+                // 🔹 Garante que a variável global de pagamentos exista
+                global.pagamentosRecebidos = global.pagamentosRecebidos || {};
+                global.pagamentosRecebidos[message.reference_code] = {
+                    reference_code: message.reference_code,
+                    external_reference: message.external_reference,
+                    status: "paid",
+                    valor: message.value_cents,
+                    generator_name: message.generator_name,
+                    generator_document: message.generator_document,
+                    payer_name: message.payer_name,
+                    payer_document: message.payer_document,
+                    registration_date: message.registration_date,
+                    payment_date: message.payment_date,
+                    end_to_end: message.end_to_end,
+                    timestamp: new Date().toISOString(),
+                };
 
-            console.log("📝 Dados do pagamento armazenados:", pagamentosRecebidos[message.reference_code]);
+                console.log("📝 Dados do pagamento armazenados:", global.pagamentosRecebidos[message.reference_code]);
+            }
+        } else {
+            console.warn("⚠️ Webhook recebido não corresponde ao tipo esperado:", webhook_type_id);
         }
 
-        res.status(200).json({ message: "Operation succeeded" }); // Confirma que recebemos a notificação
+        res.status(200).json({ message: "Operation succeeded" });
 
     } catch (error) {
         console.error("❌ Erro ao processar Webhook:", error);
         res.status(500).json({ error: "Erro ao processar webhook" });
     }
 });
-
 // 🔥 Verificação periódica de pagamentos
 setInterval(async () => {
     console.log("🔄 Verificando pagamentos pendentes...");
