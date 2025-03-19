@@ -116,6 +116,51 @@ app.get("/webhook/pagamento/:reference_code", async (req, res) => {
     }
 });
 
+///// WEBHOOK PARA PAGAMENTO ///////////////////
+// 🔥 Endpoint para cadastrar Webhook de pagamentos (pix_payments)
+app.post("/cadastrar-webhook-pagamentos", async (req, res) => {
+    try {
+        const { url, authorization } = req.body;
+        const webhookType = 2; // ✅ Alterado para capturar pagamentos
+
+        const response = await axios.post(`https://api.zendry.com.br/v1/webhooks/${webhookType}`, {
+            url
+        }, {
+            headers: {
+                "Authorization": `Bearer ${authorization}`, // ✅ Corrigido o token
+                "Content-Type": "application/json",
+            },
+        });
+
+        res.json(response.data); // ✅ Retorna a resposta da API
+    } catch (error) {
+        console.error("❌ Erro ao cadastrar webhook de pagamentos:", error);
+        res.status(error.response?.status || 500).json(error.response?.data || { error: "Erro ao cadastrar webhook de pagamentos" });
+    }
+});
+
+// 🔥 Webhook para receber notificações de pagamento Pix
+app.post("/webhook/pix-pagamentos", (req, res) => {
+    try {
+        const { notification_type, message } = req.body;
+
+        if (!message || !message.reference_code || !message.status) {
+            console.error("❌ Webhook de pagamento recebido sem dados válidos:", req.body);
+            return res.status(400).json({ error: "Dados inválidos no webhook de pagamento" });
+        }
+
+        // 🔹 Armazena o pagamento na memória (ou banco de dados, se necessário)
+        pagamentosRecebidos[message.reference_code] = message;
+        console.log(`✅ Pagamento atualizado: ${message.reference_code} - Status: ${message.status}`);
+
+        res.status(200).json({ message: "Webhook de pagamento recebido com sucesso" });
+    } catch (error) {
+        console.error("❌ Erro ao processar webhook de pagamento:", error);
+        res.status(500).json({ error: "Erro ao processar webhook de pagamento" });
+    }
+});
+
+
 
 
 // 🔥 Obtém o token de autenticação da API da Zendry
