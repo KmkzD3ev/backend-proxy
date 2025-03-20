@@ -23,7 +23,7 @@ app.post("/proxy/qrcode", async (req, res) => {
     try {
         const token = req.headers.authorization; // Captura o token enviado pelo frontend
 
-        const response = await axios.get(`https://api.zendry.com.br/v1/pix/payments/${referenceCode}`, {
+        const response = await axios.post("https://api.zendry.com.br/v1/pix/qrcodes", req.body, {
             headers: {
                 "Authorization": token,
                 "Content-Type": "application/json",
@@ -106,7 +106,7 @@ app.get("/webhook/pagamento/:reference_code", async (req, res) => {
         }
 
         // 🔥 Faz a requisição para a API da Zendry para verificar o status do pagamento
-        const response = await axios.get(`https://api.zendry.com.br/v1/pix/qrcodes/${referenceCode}`, {
+        const response = await axios.get(`https://api.zendry.com.br/v1/pix/payments/${referenceCode}`, {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json",
