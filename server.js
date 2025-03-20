@@ -106,6 +106,8 @@ app.get("/webhook/pagamento/:reference_code", async (req, res) => {
         }
 
         // 🔥 Faz a requisição para a API da Zendry para verificar o status do pagamento
+        //MUDANDO URL DE CONSULTA
+    
         const response = await axios.get(`https://api.zendry.com.br/v1/pix/payments/${referenceCode}`, {
             headers: {
                 "Authorization": `Bearer ${token}`,
