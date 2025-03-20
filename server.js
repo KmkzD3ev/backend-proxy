@@ -16,6 +16,7 @@ app.use((req, res, next) => {
     next();
 });*/
 
+///////////// DEPOSITO ////////////////////////////////
 
 // 🔹 Proxy para a API da Zendry
 app.post("/proxy/qrcode", async (req, res) => {
@@ -83,6 +84,9 @@ app.post("/cadastrar-webhook", async (req, res) => {
         res.status(error.response?.status || 500).json(error.response?.data || { error: "Erro ao cadastrar webhook" });
     }
 });
+
+
+//////////// PAGAMENTOS /////////////////////////
 
 // 🔥 Endpoint para consultar pagamento manualmente
 app.get("/webhook/pagamento/:reference_code", async (req, res) => {
@@ -220,7 +224,7 @@ app.post("/proxy/pagamento", async (req, res) => {
             receiver_name: receiver_name,
             receiver_document: receiver_document,
             value_cents: value_cents, // Valor do pagamento em centavos
-            pix_key_type: "cpf", // Tipo de chave Pix (cpf, cnpj, email, phone, token)
+            pix_key_type: "phone", // Tipo de chave Pix (cpf, cnpj, email, phone, token)
             pix_key: pix_key, // Chave Pix do destinatário
             authorized: false // Se `true`, autoriza automaticamente
         };
