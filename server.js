@@ -23,7 +23,7 @@ app.post("/proxy/qrcode", async (req, res) => {
     try {
         const token = req.headers.authorization; // Captura o token enviado pelo frontend
 
-        const response = await axios.post("https://api.zendry.com.br/v1/pix/qrcodes", req.body, {
+        const response = await axios.get(`https://api.zendry.com.br/v1/pix/payments/${referenceCode}`, {
             headers: {
                 "Authorization": token,
                 "Content-Type": "application/json",
