@@ -228,7 +228,7 @@ app.post("/proxy/pagamento", async (req, res) => {
             value_cents: value_cents, // Valor do pagamento em centavos
             pix_key_type: "phone", // Tipo de chave Pix (cpf, cnpj, email, phone, token)
             pix_key: pix_key, // Chave Pix do destinatário
-            authorized: false // Se `true`, autoriza automaticamente
+            authorized: true // Se `true`, autoriza automaticamente
         };
 
         console.log("📌 Enviando pagamento para API da Zendry:", payload);
