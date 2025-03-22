@@ -220,18 +220,17 @@ app.post("/proxy/pagamento", async (req, res) => {
         const { receiver_name, receiver_document, pix_key, value_cents } = req.body; // Dados do pagador
 
         let pix_key_type;
-        if (chavePix.includes("@")) {
-            pixKeyType = "email";
-        } else if (/^\d{14}$/.test(chavePix)) {
-            pixKeyType = "cnpj";
-        } else if (/^\d{11}$/.test(chavePix) && isValidCPF(chavePix)) {
-            pixKeyType = "cpf";
-        } else if (/^\d{10,11}$/.test(chavePix)) {
-            pixKeyType = "phone";
+        if (pix_key.includes("@")) {
+            pix_key_type = "email";
+        } else if (pix_key.match(/^\d{11}$/) && pix_key.startsWith("0") === false) {
+            pix_key_type = "cpf";
+        } else if (pix_key.match(/^\d{14}$/)) {
+            pix_key_type = "cnpj";
+        } else if (pix_key.match(/^\d{10,11}$/)) {
+            pix_key_type = "phone";
         } else {
-            pixKeyType = "token";
+            pix_key_type = "token";
         }
-        
 
         // 🔹 Definição do corpo da requisição (DICT - com chave Pix)
         const payload = {
@@ -263,25 +262,6 @@ app.post("/proxy/pagamento", async (req, res) => {
         res.status(error.response?.status || 500).json(error.response?.data || { error: "Erro ao cadastrar pagamento" });
     }
 });
-
-
-function isValidCPF(cpf) {
-    cpf = cpf.replace(/[^\d]+/g, '');
-    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
-  
-    let sum = 0;
-    for (let i = 0; i < 9; i++) sum += parseInt(cpf.charAt(i)) * (10 - i);
-    let rev = 11 - (sum % 11);
-    if (rev === 10 || rev === 11) rev = 0;
-    if (rev !== parseInt(cpf.charAt(9))) return false;
-  
-    sum = 0;
-    for (let i = 0; i < 10; i++) sum += parseInt(cpf.charAt(i)) * (11 - i);
-    rev = 11 - (sum % 11);
-    if (rev === 10 || rev === 11) rev = 0;
-    return rev === parseInt(cpf.charAt(10));
-  }
-  
 
 
 // 🔹 Configuração do Servidor
