@@ -220,19 +220,19 @@ app.post("/proxy/pagamento", async (req, res) => {
         const { receiver_name, receiver_document, pix_key, value_cents } = req.body; // Dados do pagador
 
     // 🔥 Detectar automaticamente o tipo de chave Pix
-let pixKeyType;
-if (chavePix.includes("@")) {
-    pixKeyType = "email";
-} else if (/^\d{2}9[6-9]\d{7}$/.test(chavePix)) {
-    pixKeyType = "phone";
-} else if (/^\d{11}$/.test(chavePix) && !chavePix.startsWith("0")) {
-    pixKeyType = "cpf";
-} else if (/^\d{14}$/.test(chavePix)) {
-    pixKeyType = "cnpj";
-} else {
-    pixKeyType = "token";
-}
-
+    let pixKeyType;
+    if (pix_key.includes("@")) {
+        pixKeyType = "email";
+    } else if (/^\d{2}9[6-9]\d{7}$/.test(pix_key)) {
+        pixKeyType = "phone";
+    } else if (/^\d{11}$/.test(pix_key) && !pix_key.startsWith("0")) {
+        pixKeyType = "cpf";
+    } else if (/^\d{14}$/.test(pix_key)) {
+        pixKeyType = "cnpj";
+    } else {
+        pixKeyType = "token";
+    }
+    
 
         // 🔹 Definição do corpo da requisição (DICT - com chave Pix)
         const payload = {
@@ -241,7 +241,7 @@ if (chavePix.includes("@")) {
             receiver_name: receiver_name,
             receiver_document: receiver_document,
             value_cents: value_cents, // Valor do pagamento em centavos
-            pix_key_type: pix_key_type, // Tipo de chave Pix (cpf, cnpj, email, phone, token)
+            pix_key_type: pixKeyType, // Tipo de chave Pix (cpf, cnpj, email, phone, token)
             pix_key: pix_key, // Chave Pix do destinatário
             authorized: true // Se `true`, autoriza automaticamente
         };
