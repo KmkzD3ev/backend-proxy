@@ -223,7 +223,7 @@ app.post("/proxy/pagamento", async (req, res) => {
 
         if (pix_key.includes("@")) {
             pix_key_type = "email";
-        } else if (pix_key.match(/^\d{10,11}$/)) {
+        } else if (pix_key.match(/^\+55\d{10,11}$/)) {
             pix_key_type = "phone";
         } else if (pix_key.match(/^\d{11}$/) && pix_key.startsWith("0") === false) {
             pix_key_type = "cpf";
