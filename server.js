@@ -221,19 +221,20 @@ app.post("/proxy/pagamento", async (req, res) => {
 
     // 🔥 Detectar automaticamente o tipo de chave Pix
     let pixKeyType;
+
     if (pix_key.includes("@")) {
-        pixKeyType = "email";
+      pixKeyType = "email";
     } else if (/^\d{2}9[6-9]\d{7}$/.test(pix_key)) {
-        pixKeyType = "phone";
+      pixKeyType = "phone";
+      pix_key = `+55${pix_key}`; // Formato exigido pela API: +55 + DDD + número
     } else if (/^\d{11}$/.test(pix_key) && !pix_key.startsWith("0")) {
-        pixKeyType = "cpf";
+      pixKeyType = "cpf";
     } else if (/^\d{14}$/.test(pix_key)) {
-        pixKeyType = "cnpj";
+      pixKeyType = "cnpj";
     } else {
-        pixKeyType = "token";
+      pixKeyType = "token";
     }
     
-
         // 🔹 Definição do corpo da requisição (DICT - com chave Pix)
         const payload = {
             initiation_type: "dict", // Indica que o pagamento será feito via chave Pix
