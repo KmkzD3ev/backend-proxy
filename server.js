@@ -219,18 +219,20 @@ app.post("/proxy/pagamento", async (req, res) => {
         const token = req.headers.authorization; // Token recebido no frontend
         const { receiver_name, receiver_document, pix_key, value_cents } = req.body; // Dados do pagador
 
-        let pix_key_type;
-        if (pix_key.includes("@")) {
-            pix_key_type = "email";
-        } else if (pix_key.match(/^\d{11}$/) && pix_key.startsWith("0") === false) {
-            pix_key_type = "cpf";
-        } else if (pix_key.match(/^\d{14}$/)) {
-            pix_key_type = "cnpj";
-        } else if (pix_key.match(/^\d{10,11}$/)) {
-            pix_key_type = "phone";
-        } else {
-            pix_key_type = "token";
-        }
+    // 🔥 Detectar automaticamente o tipo de chave Pix
+let pixKeyType;
+if (chavePix.includes("@")) {
+    pixKeyType = "email";
+} else if (/^\d{2}9[6-9]\d{7}$/.test(chavePix)) {
+    pixKeyType = "phone";
+} else if (/^\d{11}$/.test(chavePix) && !chavePix.startsWith("0")) {
+    pixKeyType = "cpf";
+} else if (/^\d{14}$/.test(chavePix)) {
+    pixKeyType = "cnpj";
+} else {
+    pixKeyType = "token";
+}
+
 
         // 🔹 Definição do corpo da requisição (DICT - com chave Pix)
         const payload = {
