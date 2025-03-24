@@ -132,6 +132,16 @@ async function finalizarSorteio(sorteioId) {
 }
 
 async function iniciarSorteioBackend() {
+    const sorteioAtualDoc = await getDoc(doc(db, "sorteio", "atual"));
+
+    if (sorteioAtualDoc.exists()) {
+      const { executandoNoFrontend } = sorteioAtualDoc.data();
+  
+      if (executandoNoFrontend) {
+        console.log("⚠️ Frontend está executando o sorteio. Backend pausado.");
+        return; // Backend não executa enquanto frontend estiver executando
+      }
+    }
   const sorteios = await obterSorteiosAgendados();
 
   if (sorteios.length === 0) {
