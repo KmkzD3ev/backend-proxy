@@ -68,27 +68,40 @@ function horaAtualFormatada() {
 
 // 🔍 Monitora sorteios pendentes e compara hora
 async function monitorarSorteios() {
-  console.log("🕒 Aguardando sorteios agendados com status 'pendente'...");
+  console.log("🕒 Iniciando monitoramento de sorteios pendentes...");
 
   while (true) {
-    const snapshot = await db.collection("sorteios_agendados")
-      .where("status", "==", "pendente")
-      .get();
+    try {
+      const snapshot = await db.collection("sorteios_agendados")
+        .where("status", "==", "pendente")
+        .get();
 
-    const agora = horaAtualFormatada();
+      const agora = horaAtualFormatada();
+      console.log("🕵️‍♂️ Verificando sorteios... Hora atual:", agora);
 
-    for (const doc of snapshot.docs) {
-      const sorteio = doc.data();
-      if (sorteio.hora === agora) {
-        console.log(`⏰ Sorteio agendado para agora (${sorteio.hora}). Iniciando backend...`);
-        await iniciarSorteioBackend();
-        return;
+      for (const doc of snapshot.docs) {
+        const sorteio = doc.data();
+        console.log("📋 Sorteio encontrado:", sorteio.hora);
+
+        if (sorteio.hora === agora && !sorteio.executado) {
+          console.log(`⏰ Sorteio agendado para agora (${sorteio.hora}). Iniciando backend...`);
+
+          await db.collection("sorteios_agendados").doc(doc.id).update({
+            executado: true,
+          });
+
+          await iniciarSorteioBackend();
+        }
       }
+
+    } catch (err) {
+      console.error("❌ Erro durante monitoramento:", err);
     }
 
-    await delay(5000); // Checa a cada 5 segundos
+    await delay(1000); // continuar checando
   }
 }
+
 
 // ▶️ Inicia monitoramento
 monitorarSorteios();
