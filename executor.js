@@ -25,12 +25,11 @@ async function sortearNumero() {
   } while (numerosSorteados.includes(novoNumero));
 
   numerosSorteados.push(novoNumero);
-
-  await updateDoc(doc(db, "sorteio", "atual"), {
+  await db.collection("sorteio").doc("atual").update({
     numerosSorteados,
     numeroAtual: novoNumero,
   });
-
+  
   console.log("🎯 Número sorteado:", novoNumero);
   return true;
 }
