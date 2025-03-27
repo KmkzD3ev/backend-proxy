@@ -14,11 +14,6 @@ async function buscarCartelas() {
 
 // 🔢 Sorteia número e atualiza Firestore
 async function sortearNumero() {
-  // ✅ Verifica se já foi executado
-  const snapshot = await db.collection("sorteios_agendados")
-    .where("status", "==", "executado")
-    .get();
-
 
 
   if (numerosSorteados.length >= 90) {
@@ -59,22 +54,20 @@ async function iniciarSorteioBackend(idSorteio) {
   let continuar = true;
   
   while (continuar) {
-
+    // 🔄 Agora o status será verificado a cada ciclo
     const docAtual = await db.collection("sorteios_agendados").doc(idSorteio).get();
-  const statusAtual = docAtual.data()?.status;
-    // 🔍 Verifica se ainda está autorizado a continuar sorteando
-    const snapshotStatus = await db.collection("sorteios_agendados")
-      .where("status", "==", "executado")
-      .get();
+    const statusAtual = docAtual.data()?.status;
   
-      if (statusAtual !== "executado") {
-        console.log(`🛑 Status do sorteio ${idSorteio} mudou para '${statusAtual}'. Parando agora.`);
-        break;
-      }
+    if (statusAtual === "executado") {
+      console.log(`🛑 Sorteio interrompido. Status virou 'executado'. Parando agora.`);
+      break;
+    }
+    
   
     continuar = await sortearNumero();
     await delay(2000);
   }
+  
   
   console.log("✅ Sorteio encerrado (todos os números foram sorteados).");
 }
@@ -113,7 +106,10 @@ async function monitorarSorteios() {
         const idSorteio = doc.id;
         console.log("📋 Sorteio encontrado:", sorteio.hora,idSorteio);
 
-        if (sorteio.hora === agora && !sorteio.executado) {
+        if (sorteio.hora === agora && sorteio.status === "pendente") {
+
+    
+        
           console.log(`⏰ Sorteio agendado para agora (${sorteio.hora}). Iniciando backend...`);
 
           console.log("📋 Sorteio executado");
