@@ -94,9 +94,7 @@ async function monitorarSorteios() {
         if (sorteio.hora === agora && !sorteio.executado) {
           console.log(`⏰ Sorteio agendado para agora (${sorteio.hora}). Iniciando backend...`);
 
-          await db.collection("sorteios_agendados").doc(doc.id).update({
-            executado: true,
-          });
+          console.log("📋 Sorteio executado");
 
           await iniciarSorteioBackend();
         }
