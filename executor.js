@@ -19,10 +19,7 @@ async function sortearNumero() {
     .where("status", "==", "executado")
     .get();
 
-  if (!snapshot.empty) {
-    console.log("🛑 Sorteio já executado (status no Firestore). Parando.");
-    return false;
-  }
+
 
   if (numerosSorteados.length >= 90) {
     console.log("✅ Todos os 90 números já foram sorteados. Parando.");
