@@ -58,10 +58,20 @@ async function iniciarSorteioBackend() {
 
   let continuar = true;
   while (continuar) {
+    // 🔍 Verifica se ainda está autorizado a continuar sorteando
+    const snapshotStatus = await db.collection("sorteios_agendados")
+      .where("status", "==", "executado")
+      .get();
+  
+    if (snapshotStatus.empty) {
+      console.log("🛑 Status mudou. Interrompendo sorteio imediatamente.");
+      break;
+    }
+  
     continuar = await sortearNumero();
     await delay(2000);
   }
-
+  
   console.log("✅ Sorteio encerrado (todos os números foram sorteados).");
 }
 
