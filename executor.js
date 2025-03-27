@@ -61,10 +61,18 @@ async function iniciarSorteioBackend() {
 // ⏱️ Checa hora atual no formato "HH:mm"
 function horaAtualFormatada() {
   const agora = new Date();
-  const hora = agora.getHours().toString().padStart(2, '0');
-  const minuto = agora.getMinutes().toString().padStart(2, '0');
+
+  const formatter = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const [hora, minuto] = formatter.format(agora).split(":");
   return `${hora}:${minuto}`;
 }
+
 
 // 🔍 Monitora sorteios pendentes e compara hora
 async function monitorarSorteios() {
@@ -98,7 +106,7 @@ async function monitorarSorteios() {
       console.error("❌ Erro durante monitoramento:", err);
     }
 
-    await delay(1000); // continuar checando
+    await delay(5000); // continuar checando
   }
 }
 
