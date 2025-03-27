@@ -16,6 +16,10 @@ app.use((req, res, next) => {
     next();
 });*/
 
+app.get("/ping", (req, res) => {
+    res.status(200).send("🏓 Executor ativo");
+  });
+  
 ///////////// DEPOSITO ////////////////////////////////
 
 // 🔹 Proxy para a API da Zendry
@@ -269,6 +273,8 @@ app.post("/proxy/pagamento", async (req, res) => {
 // 🔹 Configuração do Servidor
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`✅ Proxy rodando na porta ${PORT}`));
+
+
 
 require("./executor.js");
 
