@@ -14,6 +14,16 @@ async function buscarCartelas() {
 
 // 🔢 Sorteia número e atualiza Firestore
 async function sortearNumero() {
+  // ✅ Verifica se já foi executado
+  const snapshot = await db.collection("sorteios_agendados")
+    .where("status", "==", "executado")
+    .get();
+
+  if (!snapshot.empty) {
+    console.log("🛑 Sorteio já executado (status no Firestore). Parando.");
+    return false;
+  }
+
   if (numerosSorteados.length >= 90) {
     console.log("✅ Todos os 90 números já foram sorteados. Parando.");
     return false;
@@ -33,6 +43,27 @@ async function sortearNumero() {
   console.log("🎯 Número sorteado:", novoNumero);
   return true;
 }
+
+/*async function sortearNumero() {
+  if (numerosSorteados.length >= 90) {
+    console.log("✅ Todos os 90 números já foram sorteados. Parando.");
+    return false;
+  }
+
+  let novoNumero;
+  do {
+    novoNumero = Math.floor(Math.random() * 90) + 1;
+  } while (numerosSorteados.includes(novoNumero));
+
+  numerosSorteados.push(novoNumero);
+  await db.collection("sorteio").doc("atual").update({
+    numerosSorteados,
+    numeroAtual: novoNumero,
+  });
+
+  console.log("🎯 Número sorteado:", novoNumero);
+  return true;
+}*/
 
 // 🚀 Executa o sorteio com delay inicial
 async function iniciarSorteioBackend() {
