@@ -42,7 +42,7 @@ async function sortearNumero() {
 }
 
 // 🚀 Executa o sorteio com delay inicial
-async function iniciarSorteioBackend() {
+async function iniciarSorteioBackend(idSorteio) {
   const cartelasAtivas = await buscarCartelas();
 
   if (!cartelasAtivas) {
@@ -57,16 +57,20 @@ async function iniciarSorteioBackend() {
   console.log("🚀 Iniciando sorteio (somente geração de números)");
 
   let continuar = true;
+  
   while (continuar) {
+
+    const docAtual = await db.collection("sorteios_agendados").doc(idSorteio).get();
+  const statusAtual = docAtual.data()?.status;
     // 🔍 Verifica se ainda está autorizado a continuar sorteando
     const snapshotStatus = await db.collection("sorteios_agendados")
       .where("status", "==", "executado")
       .get();
   
-    if (snapshotStatus.empty) {
-      console.log("🛑 Status mudou. Interrompendo sorteio imediatamente.");
-      break;
-    }
+      if (statusAtual !== "executado") {
+        console.log(`🛑 Status do sorteio ${idSorteio} mudou para '${statusAtual}'. Parando agora.`);
+        break;
+      }
   
     continuar = await sortearNumero();
     await delay(2000);
@@ -106,14 +110,15 @@ async function monitorarSorteios() {
 
       for (const doc of snapshot.docs) {
         const sorteio = doc.data();
-        console.log("📋 Sorteio encontrado:", sorteio.hora);
+        const idSorteio = doc.id;
+        console.log("📋 Sorteio encontrado:", sorteio.hora,idSorteio);
 
         if (sorteio.hora === agora && !sorteio.executado) {
           console.log(`⏰ Sorteio agendado para agora (${sorteio.hora}). Iniciando backend...`);
 
           console.log("📋 Sorteio executado");
 
-          await iniciarSorteioBackend();
+          await iniciarSorteioBackend(idSorteio);
         }
       }
 
