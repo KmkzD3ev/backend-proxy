@@ -270,6 +270,8 @@ app.post("/proxy/pagamento", async (req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`✅ Proxy rodando na porta ${PORT}`));
 
+require("./executor.js");
+
 
   
   
